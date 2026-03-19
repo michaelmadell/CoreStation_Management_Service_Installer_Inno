@@ -2,7 +2,7 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "CoreStation HX Agent"
-#define MyAppVersion "20.26.3.1_rc1"
+#define MyAppVersion "20.26.3.1_rc2"
 #define MyAppVersionShort "20.26.3.1"
 #define MyAppPublisher "Amulet Hotkey LTD"
 #define MyAppURL "https://www.amulethotkey.com/"

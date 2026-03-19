@@ -141,6 +141,81 @@ try {
         }
     }
 
+    #### Re assigning AMT To another port if necessary ####
+    $assignments = @{
+        'VEN_8086&DEV_7773&SUBSYS_72708086&REV_00' = 'COM4'   # Device 1
+        'VEN_8086&DEV_7E73&SUBSYS_72708086&REV_20' = 'COM4'   # Device 2
+    }
+    $pciBase  = 'HKLM:\SYSTEM\CurrentControlSet\Enum\PCI'
+    $logFile  = 'C:\Windows\Logs\SetCOMPorts.log'
+
+    function Write-Log ([string]$msg) {
+        $line = "[$(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')] $msg"
+        $line | Out-File -FilePath $logFile -Append -Encoding UTF8
+    }
+
+    Write-Log "========================================"
+    Write-Log "COM port assignment script started."
+
+    $arbPath = 'HKLM:\SYSTEM\CurrentControlSet\Control\COM Name Arbiter'
+    try {
+        $comDb = (Get-ItemProperty -Path $arbPath -Name 'ComDB' -ErrorAction Stop).ComDB
+
+        if ($null -eq $comDb -or $comDb.Length -eq 0) {
+            $comDb = [byte[]]::new(8)
+        }
+
+        # COM4 = bit index 3 → byte[0] |= 0x08
+        if (($comDb[0] -band 0x08) -eq 0) {
+            $comDb[0] = $comDb[0] -bor 0x08
+            Set-ItemProperty -Path $arbPath -Name 'ComDB' -Value $comDb -Type Binary
+            Write-Log "COM Name Arbiter: COM4 reserved (ComDB byte[0] = 0x$("{0:X2}" -f $comDb[0]))."
+        } else {
+            Write-Log "COM Name Arbiter: COM4 was already reserved, no change needed."
+        }
+    } catch {
+        Write-Log "WARNING: Could not update COM Name Arbiter: $_"
+    }
+    foreach ($devId in $assignments.Keys) {
+        $targetPort = $assignments[$devId]
+        $devKeyPath  = Join-Path $pciBase $devId
+
+        # This machine may not have this device — skip silently
+        if (-not (Test-Path $devKeyPath)) {
+            Write-Log "Device not present on this machine, skipping: $devId"
+            continue
+        }
+
+        $instances = Get-ChildItem -Path $devKeyPath -ErrorAction SilentlyContinue
+        if (-not $instances) {
+            Write-Log "WARNING: No instance subkeys found under: $devId"
+            continue
+        }
+
+        foreach ($instance in $instances) {
+            $paramPath = "$($instance.PSPath)\Device Parameters"
+
+            try {
+                if (-not (Test-Path $paramPath)) {
+                    New-Item -Path $paramPath -Force | Out-Null
+                    Write-Log "  Created missing 'Device Parameters' key for instance: $($instance.PSChildName)"
+                }
+
+                Set-ItemProperty -Path $paramPath -Name 'PortName' -Value $targetPort -Type String
+                Write-Log "  OK: $devId \ $($instance.PSChildName) → PortName = $targetPort"
+
+                Set-ItemProperty -Path $($instance.PSPath) -Name 'FriendlyName' -Value "Intel(R) Active Management Technology - SOL (COM4)" -Type String
+                Write-Log "  OK: $devId \ $($instance.PSPath) → FriendlyName = 'Intel(R) Active Management Technology - SOL (COM4)'"
+
+            } catch {
+                Write-Log "  ERROR: Failed to write PortName on $($instance.PSChildName): $_"
+            }
+        }
+    }
+
+    Write-Log "COM port assignment script finished."
+    Write-Log "========================================"
+
     # 6. Create the new service
     Write-Host "Creating new service from executable: '$NewExePath'..."
     New-Service -Name $ServiceName `
