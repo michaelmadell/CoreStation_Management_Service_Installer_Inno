@@ -25,11 +25,12 @@ CreateAppDir=yes
 PrivilegesRequired=admin
 OutputBaseFilename=CoreStation HX Agent Installer {#MyAppVersion}
 SolidCompression=yes
-WizardStyle=modern
+WizardStyle=dynamic
 ArchitecturesAllowed=win64
 SetupIconFile=logo.ico
 AlwaysRestart=yes
 MinVersion=10.0.19045
+UninstallDisplayIcon={app}/logo.ico
 
 VersionInfoCompany=Amulet Hotkey
 VersionInfoCopyright=© Amulet Hotkey 2025
@@ -49,7 +50,7 @@ Source: ".\remove.ps1"; DestDir: "{app}"; Flags: ignoreversion
 Source: ".\logo.ico"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
-Name: "{group}\Uninstall CoreStation HX Agent"; Filename: "{uninstallexe}"; IconFilename: "{app}\logo.ico"
+Name: "{group}\Uninstall CoreStation HX Agent"; Filename: "{uninstallexe}"; IconFilename: "C:\Program Files (x86)\CoreStation HX Agent\logo.ico"
 
 [Run]
 ; Diagnostic: confirm [Run] is reached at all — check for C:\Windows\Temp\CoreStation_run.log after install
@@ -74,17 +75,11 @@ Filename: "{sys}\WindowsPowerShell\v1.0\powershell.exe"; \
 procedure CurStepChanged(CurStep: TSetupStep);
 var
   ResultCode: Integer;
-  LogFile: string;
 begin
-  LogFile := 'C:\Windows\Temp\CoreStation_code.log';
 
   if CurStep = ssInstall then
   begin
-    SaveStringToFile(LogFile, '[Code] ssInstall reached' + #13#10, False);
-
-    SaveStringToFile(LogFile, 'Extracting remove.ps1 to tmp...' + #13#10, True);
     ExtractTemporaryFile('remove.ps1');
-    SaveStringToFile(LogFile, 'Extracted OK. Running remove.ps1...' + #13#10, True);
 
     Exec(
       ExpandConstant('{sys}\WindowsPowerShell\v1.0\powershell.exe'),
@@ -94,7 +89,6 @@ begin
       ewWaitUntilTerminated,
       ResultCode
     );
-    SaveStringToFile(LogFile, 'remove.ps1 exited with code: ' + IntToStr(ResultCode) + #13#10, True);
   end;
 end;
 
