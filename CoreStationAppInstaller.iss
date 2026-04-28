@@ -2,8 +2,8 @@
 ; SEE THE DOCUMENTATION FOR DETAILS ON CREATING INNO SETUP SCRIPT FILES!
 
 #define MyAppName "CoreStation HX Agent"
-#define MyAppVersion "20.26.3.1"
-#define MyAppVersionShort "20.26.3.1"
+#define MyAppVersion "20.26.5.1_rc1"
+#define MyAppVersionShort "20.26.5.1"
 #define MyAppPublisher "Amulet Hotkey LTD"
 #define MyAppURL "https://www.amulethotkey.com/"
 #define MyAppExeName "CoreStationHXAgent.exe"
@@ -33,7 +33,7 @@ MinVersion=10.0.19045
 UninstallDisplayIcon={app}/logo.ico
 
 VersionInfoCompany=Amulet Hotkey
-VersionInfoCopyright=© Amulet Hotkey 2025
+VersionInfoCopyright=© Amulet Hotkey 2026
 VersionInfoDescription=CoreStation HX Agent installer
 VersionInfoProductTextVersion={#MyAppVersionShort}
 VersionInfoProductVersion={#MyAppVersionShort}
